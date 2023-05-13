@@ -3,7 +3,6 @@
 
 extern crate chrono;
 
-use self::chrono::naive::MAX_DATE;
 use self::chrono::{DateTime, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use std::io::Write;
 
@@ -15,7 +14,10 @@ use crate::sql_types::{Date, Time, Timestamp, Timestamptz};
 
 // Postgres timestamps start from January 1st 2000.
 fn pg_epoch() -> NaiveDateTime {
-    NaiveDate::from_ymd(2000, 1, 1).and_hms(0, 0, 0)
+    NaiveDate::from_ymd_opt(2000, 1, 1)
+        .expect("This is in supported range of chrono dates")
+        .and_hms_opt(0, 0, 0)
+        .expect("This is a valid input")
 }
 
 impl FromSql<Timestamp, Pg> for NaiveDateTime {
@@ -78,7 +80,7 @@ impl<TZ: TimeZone> ToSql<Timestamptz, Pg> for DateTime<TZ> {
 }
 
 fn midnight() -> NaiveTime {
-    NaiveTime::from_hms(0, 0, 0)
+    NaiveTime::from_hms_opt(0, 0, 0).expect("This is a valid hms spec")
 }
 
 impl ToSql<Time, Pg> for NaiveTime {
@@ -100,7 +102,7 @@ impl FromSql<Time, Pg> for NaiveTime {
 }
 
 fn pg_epoch_date() -> NaiveDate {
-    NaiveDate::from_ymd(2000, 1, 1)
+    NaiveDate::from_ymd_opt(2000, 1, 1).expect("This is in supported range of chrono dates")
 }
 
 impl ToSql<Date, Pg> for NaiveDate {
@@ -116,7 +118,7 @@ impl FromSql<Date, Pg> for NaiveDate {
         match pg_epoch_date().checked_add_signed(Duration::days(i64::from(offset))) {
             Some(date) => Ok(date),
             None => {
-                let error_message = format!("Chrono can only represent dates up to {:?}", MAX_DATE);
+                let error_message = format!("Chrono can only represent dates up to {:?}", chrono::NaiveDate::MAX);
                 Err(error_message.into())
             }
         }

@@ -121,6 +121,7 @@ impl<'a, 'b> SqliteValue<'a, 'b> {
                 "Sqlite's documentation state that this case ({}) is not reachable. \
                  If you ever see this error message please open an issue at \
                  https://github.com/diesel-rs/diesel."
+                , tpe
             ),
         }
     }
